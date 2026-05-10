@@ -1,50 +1,70 @@
-'use client';
+"use client";
 
-import Header from '@/components/Header';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { useState } from 'react';
+import Header from "@/components/Header";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import React, { useState } from "react";
 
 const algorithmInfo: Record<string, any> = {
-  'gauss-seidel': {
-    name: 'Gauss-Seidel',
-    category: 'Résolution Des Systèmes Linéaires',
-    color: 'yellow-400',
-    description: 'Méthode itérative pour résoudre des systèmes linéaires Ax = b',
+  "gauss-seidel": {
+    name: "Gauss-Seidel",
+    category: "Résolution Des Systèmes Linéaires",
+    color: "yellow-400",
+    description:
+      "Méthode itérative pour résoudre des systèmes linéaires Ax = b",
   },
   jacobi: {
-    name: 'Jacobi',
-    category: 'Résolution Des Systèmes Linéaires',
-    color: 'pink-400',
-    description: 'Méthode de Jacobi pour l\'approximation des solutions',
+    name: "Jacobi",
+    category: "Résolution Des Systèmes Linéaires",
+    color: "pink-400",
+    description: "Méthode de Jacobi pour l'approximation des solutions",
   },
   lagrange: {
-    name: 'Lagrange',
-    category: 'Interpolation Et Approximation',
-    color: 'blue-400',
-    description: 'Interpolation polynomiale de Lagrange',
+    name: "Lagrange",
+    category: "Interpolation Et Approximation",
+    color: "blue-400",
+    description: "Interpolation polynomiale de Lagrange",
   },
-  'newton-dd': {
-    name: 'Newton Divided Differences',
-    category: 'Interpolation Et Approximation',
-    color: 'yellow-400',
-    description: 'Différences divisées de Newton pour l\'interpolation',
+  "newton-dd": {
+    name: "Newton Divided Differences",
+    category: "Interpolation Et Approximation",
+    color: "yellow-400",
+    description: "Différences divisées de Newton pour l'interpolation",
   },
   spline: {
-    name: 'Spline Cubique',
-    category: 'Interpolation Et Approximation',
-    color: 'red-400',
-    description: 'Interpolation par splines cubiques',
+    name: "Spline Cubique",
+    category: "Interpolation Et Approximation",
+    color: "red-400",
+    description: "Interpolation par splines cubiques",
   },
   function3: {
-    name: 'Function3',
-    category: 'Algorithms',
-    color: 'pink-400',
-    description: 'Algorithme avancé de résolution',
+    name: "Function3",
+    category: "Algorithms",
+    color: "pink-400",
+    description: "Algorithme avancé de résolution",
   },
 };
 
-export default function AlgorithmPage({ params }: { params: { id: string } }) {
-  const info = algorithmInfo[params.id] || { name: 'Algorithm', category: 'Algorithms', color: 'blue-400', description: 'Algorithm description' };
+export default function AlgorithmPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  const { id } = React.use(params);
+  const info = algorithmInfo[id] || {
+    name: "Algorithm",
+    category: "Algorithms",
+    color: "blue-400",
+    description: "Algorithm description",
+  };
   const [result, setResult] = useState<any>(null);
 
   const mockConvergenceData = [
@@ -73,7 +93,9 @@ export default function AlgorithmPage({ params }: { params: { id: string } }) {
           {/* Left Column - Input Form */}
           <div className="lg:col-span-1">
             <div className="bg-card border border-border rounded-xl p-6 sticky top-24">
-              <h3 className="text-lg font-semibold text-foreground mb-6">Inputs</h3>
+              <h3 className="text-lg font-semibold text-foreground mb-6">
+                Inputs
+              </h3>
 
               <div className="space-y-4">
                 <div>
@@ -111,9 +133,14 @@ export default function AlgorithmPage({ params }: { params: { id: string } }) {
 
                 <button
                   onClick={handleSolve}
-                  className={`w-full bg-${info.color.split('-')[0]}-500/80 hover:bg-${info.color.split('-')[0]}-600 text-white font-semibold py-2 rounded-lg transition-colors mt-6`}
+                  className={`w-full bg-${info.color.split("-")[0]}-500/80 hover:bg-${info.color.split("-")[0]}-600 text-white font-semibold py-2 rounded-lg transition-colors mt-6`}
                   style={{
-                    backgroundColor: info.color === 'yellow-400' ? '#eab308' : info.color === 'pink-400' ? '#ec4899' : '#3b82f6',
+                    backgroundColor:
+                      info.color === "yellow-400"
+                        ? "#eab308"
+                        : info.color === "pink-400"
+                          ? "#ec4899"
+                          : "#3b82f6",
                   }}
                 >
                   Solve
@@ -127,7 +154,9 @@ export default function AlgorithmPage({ params }: { params: { id: string } }) {
             {result && (
               <>
                 <div className="bg-card border border-border rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">result :</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
+                    result :
+                  </h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                     <div className="bg-input rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Result</p>
@@ -136,8 +165,12 @@ export default function AlgorithmPage({ params }: { params: { id: string } }) {
                       </p>
                     </div>
                     <div className="bg-input rounded-lg p-4">
-                      <p className="text-sm text-muted-foreground">Iterations</p>
-                      <p className="text-lg font-bold text-green-400">{result.iterations}</p>
+                      <p className="text-sm text-muted-foreground">
+                        Iterations
+                      </p>
+                      <p className="text-lg font-bold text-green-400">
+                        {result.iterations}
+                      </p>
                     </div>
                     <div className="bg-input rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Error</p>
@@ -149,17 +182,25 @@ export default function AlgorithmPage({ params }: { params: { id: string } }) {
                 </div>
 
                 <div className="bg-card border border-border rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Convergence Analysis</h3>
+                  <h3 className="text-lg font-semibold text-foreground mb-4">
+                    Convergence Analysis
+                  </h3>
                   <ResponsiveContainer width="100%" height={300}>
                     <LineChart data={result.convergenceData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                      <XAxis dataKey="iteration" stroke="rgba(255,255,255,0.5)" />
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        stroke="rgba(255,255,255,0.1)"
+                      />
+                      <XAxis
+                        dataKey="iteration"
+                        stroke="rgba(255,255,255,0.5)"
+                      />
                       <YAxis stroke="rgba(255,255,255,0.5)" />
                       <Tooltip
                         contentStyle={{
-                          backgroundColor: 'rgba(20, 20, 25, 0.9)',
-                          border: '1px solid rgba(255,255,255,0.1)',
-                          borderRadius: '0.5rem',
+                          backgroundColor: "rgba(20, 20, 25, 0.9)",
+                          border: "1px solid rgba(255,255,255,0.1)",
+                          borderRadius: "0.5rem",
                         }}
                       />
                       <Legend />
