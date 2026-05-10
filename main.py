@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from axe1.router import router as axe1_router
 from axe2.router import router as axe2_router
 from axe3.main_axe3 import router as axe3_router
-from custom_algorithms.routes import router as custom_router
+from custom_algorithms.runner import router as custom_router
 
 app = FastAPI(title="Numerica API", version="1.0.0")
 
