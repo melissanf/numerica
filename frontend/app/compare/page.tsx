@@ -1,8 +1,8 @@
-'use client';
+"use client";
 
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
-import { useState } from 'react';
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import { useState } from "react";
 import {
   LineChart,
   Line,
@@ -14,202 +14,409 @@ import {
   Tooltip,
   Legend,
   ResponsiveContainer,
-} from 'recharts';
+} from "recharts";
+
+const API = "http://127.0.0.1:8000";
+
+const ALGOS = [
+  { id: "dichotomie", name: "Dichotomie", color: "#3b82f6" },
+  { id: "newton", name: "Newton", color: "#ef4444" },
+  { id: "secante", name: "Sécante", color: "#22c55e" },
+];
+
+const COMPARISON_TABLE = [
+  {
+    aspect: "Convergence",
+    dichotomie: "Linéaire",
+    newton: "Quadratique",
+    secante: "Superlinéaire",
+  },
+  {
+    aspect: "Dérivée requise",
+    dichotomie: "Non",
+    newton: "Oui",
+    secante: "Non",
+  },
+  {
+    aspect: "Points initiaux",
+    dichotomie: "2 (intervalle)",
+    newton: "1 point",
+    secante: "2 points",
+  },
+  {
+    aspect: "Robustesse",
+    dichotomie: "Très fiable",
+    newton: "Sensible à x0",
+    secante: "Modérée",
+  },
+];
 
 export default function ComparePage() {
-  const [selectedAlgorithms, setSelectedAlgorithms] = useState(['dichotomie', 'newton', 'secante']);
-  const [functionInput, setFunctionInput] = useState('x**2 - 4');
+  const [selected, setSelected] = useState(["dichotomie", "newton", "secante"]);
+  const [fn, setFn] = useState("x**2 - 4");
+  const [a, setA] = useState("0");
+  const [b, setB] = useState("5");
+  const [x0, setX0] = useState("1");
+  const [x1, setX1] = useState("3");
+  const [loading, setLoading] = useState(false);
+  const [results, setResults] = useState<Record<string, any>>({});
+  const [error, setError] = useState<string | null>(null);
 
-  const algorithms = [
-    { id: 'dichotomie', name: 'Dichotomie', color: '#3b82f6' },
-    { id: 'newton', name: 'Newton', color: '#ef4444' },
-    { id: 'secante', name: 'Secante', color: '#22c55e' },
+  function toggle(id: string) {
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((a) => a !== id) : [...prev, id],
+    );
+  }
+
+  async function handleCompare() {
+    setLoading(true);
+    setError(null);
+    setResults({});
+
+    const calls: Record<string, Promise<any>> = {};
+
+    if (selected.includes("dichotomie")) {
+      calls.dichotomie = fetch(`${API}/axe1/dichotomie`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ f: fn, a: parseFloat(a), b: parseFloat(b) }),
+      }).then((r) => r.json());
+    }
+
+    if (selected.includes("newton")) {
+      calls.newton = fetch(`${API}/axe1/newton`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          f: fn,
+          x0: parseFloat(x0),
+          a: parseFloat(a),
+          b: parseFloat(b),
+        }),
+      }).then((r) => r.json());
+    }
+
+    if (selected.includes("secante")) {
+      calls.secante = fetch(`${API}/axe1/secante`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ f: fn, x0: parseFloat(x0), x1: parseFloat(x1) }),
+      }).then((r) => r.json());
+    }
+
+    try {
+      const resolved: Record<string, any> = {};
+      await Promise.all(
+        Object.entries(calls).map(async ([id, promise]) => {
+          resolved[id] = await promise;
+        }),
+      );
+      setResults(resolved);
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // Build convergence chart data — align by iteration index
+  const maxIter = Math.max(
+    ...Object.values(results).map((r: any) => r.convergence_data?.length ?? 0),
+  );
+  const convergenceData = Array.from({ length: maxIter }, (_, i) => {
+    const row: any = { iteration: i };
+    for (const [id, r] of Object.entries(results)) {
+      row[id] = r.convergence_data?.[i]?.error ?? null;
+    }
+    return row;
+  });
+
+  // Bar chart data
+  const metricsData = [
+    {
+      metric: "Itérations",
+      ...Object.fromEntries(
+        Object.entries(results).map(([id, r]) => [id, r.iterations ?? 0]),
+      ),
+    },
+    {
+      metric: "Erreur finale (×1e5)",
+      ...Object.fromEntries(
+        Object.entries(results).map(([id, r]) => [
+          id,
+          r.error ? +(r.error * 1e5).toFixed(4) : 0,
+        ]),
+      ),
+    },
   ];
 
-  const comparisonData = [
-    {
-      metric: 'Iterations',
-      dichotomie: 15,
-      newton: 5,
-      secante: 8,
-    },
-    {
-      metric: 'Convergence Speed',
-      dichotomie: 2,
-      newton: 5,
-      secante: 4,
-    },
-    {
-      metric: 'Final Error',
-      dichotomie: 0.00008,
-      newton: 0.0000001,
-      secante: 0.00001,
-    },
-  ];
-
-  const convergenceData = [
-    { iteration: 0, dichotomie: 2.5, newton: 1, secante: 1.5 },
-    { iteration: 1, dichotomie: 1.25, newton: 0.1, secante: 1.0 },
-    { iteration: 2, dichotomie: 0.625, newton: 0.01, secante: 0.5 },
-    { iteration: 3, dichotomie: 0.3125, newton: 0.001, secante: 0.2 },
-    { iteration: 4, dichotomie: 0.15625, newton: 0.0001, secante: 0.08 },
-    { iteration: 5, dichotomie: 0.078125, newton: 0.00001, secante: 0.02 },
-  ];
-
-  const comparisonTable = [
-    {
-      aspect: 'Convergence Type',
-      dichotomie: 'Linear',
-      newton: 'Quadratic',
-      secante: 'Superlinear',
-    },
-    {
-      aspect: 'Derivative Required',
-      dichotomie: 'No',
-      newton: 'Yes',
-      secante: 'No',
-    },
-    {
-      aspect: 'Initial Points Needed',
-      dichotomie: '2 (interval)',
-      newton: '1 point',
-      secante: '2 points',
-    },
-    {
-      aspect: 'Typical Use Case',
-      dichotomie: 'Simple, reliable',
-      newton: 'Fast convergence',
-      secante: 'No derivative available',
-    },
-  ];
+  const hasResults = Object.keys(results).length > 0;
 
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-
       <main className="ml-32">
-        <Header title="Algorithm Comparison" />
-
+        <Header title="NUMERICA" />
         <div className="p-8 max-w-7xl mx-auto space-y-8">
-          {/* Comparison Controls */}
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Compare Algorithms</h3>
+          {/* Controls */}
+          <div className="bg-card border border-border rounded-xl p-6 space-y-5">
+            <h3 className="text-lg font-semibold text-foreground">
+              Comparer les algorithmes
+            </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Function :
+                <label className="block text-sm text-muted-foreground mb-2">
+                  f(x)
                 </label>
                 <input
-                  type="text"
-                  value={functionInput}
-                  onChange={(e) => setFunctionInput(e.target.value)}
-                  placeholder="e.g., x**2 - 4"
-                  className="w-full bg-input text-foreground placeholder-muted-foreground px-3 py-2 rounded-lg border border-border focus:outline-none focus:ring-2 focus:ring-ring"
+                  value={fn}
+                  onChange={(e) => setFn(e.target.value)}
+                  className="w-full bg-input border border-border text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 />
               </div>
-
               <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Select Algorithms :
+                <label className="block text-sm text-muted-foreground mb-2">
+                  Intervalle [a, b]
                 </label>
-                <div className="flex flex-wrap gap-2">
-                  {algorithms.map((algo) => (
-                    <button
-                      key={algo.id}
-                      onClick={() => {
-                        setSelectedAlgorithms((prev) =>
-                          prev.includes(algo.id)
-                            ? prev.filter((a) => a !== algo.id)
-                            : [...prev, algo.id]
-                        );
-                      }}
-                      className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                        selectedAlgorithms.includes(algo.id)
-                          ? 'bg-primary text-primary-foreground'
-                          : 'bg-input text-foreground hover:bg-input/80'
-                      }`}
-                    >
-                      {algo.name}
-                    </button>
-                  ))}
+                <div className="flex gap-2">
+                  <input
+                    value={a}
+                    onChange={(e) => setA(e.target.value)}
+                    placeholder="a"
+                    className="w-full bg-input border border-border text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                  <input
+                    value={b}
+                    onChange={(e) => setB(e.target.value)}
+                    placeholder="b"
+                    className="w-full bg-input border border-border text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm text-muted-foreground mb-2">
+                  Points initiaux x0, x1
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    value={x0}
+                    onChange={(e) => setX0(e.target.value)}
+                    placeholder="x0"
+                    className="w-full bg-input border border-border text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
+                  <input
+                    value={x1}
+                    onChange={(e) => setX1(e.target.value)}
+                    placeholder="x1"
+                    className="w-full bg-input border border-border text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none"
+                  />
                 </div>
               </div>
             </div>
-          </div>
 
-          {/* Metrics Comparison */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Bar Chart - Metrics */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Performance Metrics</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={comparisonData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="metric" stroke="rgba(255,255,255,0.5)" />
-                  <YAxis stroke="rgba(255,255,255,0.5)" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(20, 20, 25, 0.9)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '0.5rem',
-                    }}
-                  />
-                  <Legend />
-                  <Bar dataKey="dichotomie" fill="#3b82f6" />
-                  <Bar dataKey="newton" fill="#ef4444" />
-                  <Bar dataKey="secante" fill="#22c55e" />
-                </BarChart>
-              </ResponsiveContainer>
+            <div className="flex items-center gap-4 flex-wrap">
+              <div className="flex gap-2">
+                {ALGOS.map((algo) => (
+                  <button
+                    key={algo.id}
+                    onClick={() => toggle(algo.id)}
+                    style={
+                      selected.includes(algo.id)
+                        ? { backgroundColor: algo.color, color: "white" }
+                        : {}
+                    }
+                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors border ${
+                      selected.includes(algo.id)
+                        ? "border-transparent"
+                        : "bg-input border-border text-muted-foreground hover:text-foreground"
+                    }`}
+                  >
+                    {algo.name}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={handleCompare}
+                disabled={loading || selected.length === 0}
+                className="px-8 py-2 rounded-lg bg-primary text-primary-foreground font-medium hover:bg-primary/80 transition-colors disabled:opacity-50"
+              >
+                {loading ? "Calcul..." : "Comparer"}
+              </button>
             </div>
 
-            {/* Line Chart - Convergence */}
-            <div className="bg-card border border-border rounded-xl p-6">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Convergence Behavior</h3>
-              <ResponsiveContainer width="100%" height={300}>
-                <LineChart data={convergenceData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="iteration" stroke="rgba(255,255,255,0.5)" />
-                  <YAxis stroke="rgba(255,255,255,0.5)" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'rgba(20, 20, 25, 0.9)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                      borderRadius: '0.5rem',
-                    }}
-                  />
-                  <Legend />
-                  <Line type="monotone" dataKey="dichotomie" stroke="#3b82f6" strokeWidth={2} />
-                  <Line type="monotone" dataKey="newton" stroke="#ef4444" strokeWidth={2} />
-                  <Line type="monotone" dataKey="secante" stroke="#22c55e" strokeWidth={2} />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
+            {error && (
+              <div className="p-3 rounded-lg border border-red-400/30 bg-red-500/10 text-red-400 text-sm">
+                {error}
+              </div>
+            )}
           </div>
 
-          {/* Detailed Comparison Table */}
+          {/* Results summary */}
+          {hasResults && (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {ALGOS.filter((a) => results[a.id]).map((algo) => {
+                const r = results[algo.id];
+                return (
+                  <div
+                    key={algo.id}
+                    className="bg-card border border-border rounded-xl p-5"
+                  >
+                    <h4
+                      className="font-semibold mb-3"
+                      style={{ color: algo.color }}
+                    >
+                      {algo.name}
+                    </h4>
+                    {r.racine === null ? (
+                      <p className="text-red-400 text-sm">{r.message}</p>
+                    ) : (
+                      <div className="space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Racine</span>
+                          <span className="font-mono text-foreground">
+                            {r.racine?.toFixed(8)}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">
+                            Itérations
+                          </span>
+                          <span className="font-mono text-green-400">
+                            {r.iterations}
+                          </span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Erreur</span>
+                          <span className="font-mono text-yellow-400">
+                            {r.error?.toExponential(3)}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Charts */}
+          {hasResults && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Convergence des erreurs
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <LineChart data={convergenceData}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="rgba(255,255,255,0.1)"
+                    />
+                    <XAxis dataKey="iteration" stroke="rgba(255,255,255,0.5)" />
+                    <YAxis stroke="rgba(255,255,255,0.5)" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "rgba(20,20,25,0.9)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "0.5rem",
+                      }}
+                    />
+                    <Legend />
+                    {ALGOS.filter((a) => results[a.id]?.racine !== null).map(
+                      (algo) => (
+                        <Line
+                          key={algo.id}
+                          type="monotone"
+                          dataKey={algo.id}
+                          stroke={algo.color}
+                          strokeWidth={2}
+                          dot={false}
+                          isAnimationActive={false}
+                          name={algo.name}
+                          connectNulls
+                        />
+                      ),
+                    )}
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="bg-card border border-border rounded-xl p-6">
+                <h3 className="text-lg font-semibold text-foreground mb-4">
+                  Métriques
+                </h3>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={metricsData}>
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      stroke="rgba(255,255,255,0.1)"
+                    />
+                    <XAxis dataKey="metric" stroke="rgba(255,255,255,0.5)" />
+                    <YAxis stroke="rgba(255,255,255,0.5)" />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "rgba(20,20,25,0.9)",
+                        border: "1px solid rgba(255,255,255,0.1)",
+                        borderRadius: "0.5rem",
+                      }}
+                    />
+                    <Legend />
+                    {ALGOS.filter((a) => results[a.id]?.racine !== null).map(
+                      (algo) => (
+                        <Bar
+                          key={algo.id}
+                          dataKey={algo.id}
+                          fill={algo.color}
+                          name={algo.name}
+                        />
+                      ),
+                    )}
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* Static comparison table */}
           <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Detailed Comparison</h3>
+            <h3 className="text-lg font-semibold text-foreground mb-4">
+              Comparaison théorique
+            </h3>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-3 px-4 font-semibold text-foreground">Aspect</th>
-                    <th className="text-left py-3 px-4 font-semibold text-blue-400">Dichotomie</th>
-                    <th className="text-left py-3 px-4 font-semibold text-red-400">Newton</th>
-                    <th className="text-left py-3 px-4 font-semibold text-green-400">Secante</th>
+                    <th className="text-left py-3 px-4 text-muted-foreground">
+                      Aspect
+                    </th>
+                    <th className="text-left py-3 px-4 text-blue-400">
+                      Dichotomie
+                    </th>
+                    <th className="text-left py-3 px-4 text-red-400">Newton</th>
+                    <th className="text-left py-3 px-4 text-green-400">
+                      Sécante
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {comparisonTable.map((row, idx) => (
+                  {COMPARISON_TABLE.map((row, i) => (
                     <tr
-                      key={idx}
+                      key={i}
                       className="border-b border-border/50 hover:bg-input/30 transition-colors"
                     >
-                      <td className="py-3 px-4 text-foreground font-medium">{row.aspect}</td>
-                      <td className="py-3 px-4 text-foreground/80">{row.dichotomie}</td>
-                      <td className="py-3 px-4 text-foreground/80">{row.newton}</td>
-                      <td className="py-3 px-4 text-foreground/80">{row.secante}</td>
+                      <td className="py-3 px-4 text-foreground font-medium">
+                        {row.aspect}
+                      </td>
+                      <td className="py-3 px-4 text-foreground/80">
+                        {row.dichotomie}
+                      </td>
+                      <td className="py-3 px-4 text-foreground/80">
+                        {row.newton}
+                      </td>
+                      <td className="py-3 px-4 text-foreground/80">
+                        {row.secante}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -218,30 +425,48 @@ export default function ComparePage() {
           </div>
 
           {/* Recommendations */}
-          <div className="bg-card border border-border rounded-xl p-6">
-            <h3 className="text-lg font-semibold text-foreground mb-4">Recommendations</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
-                <h4 className="text-blue-400 font-semibold mb-2">Use Dichotomie</h4>
-                <p className="text-sm text-foreground/80">
-                  When you want a guaranteed, slow but reliable method. Good for educational purposes.
-                </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              {
+                title: "Dichotomie",
+                color: "blue",
+                text: "Fiable et simple. Idéal quand on veut garantir la convergence sans dérivée.",
+              },
+              {
+                title: "Newton",
+                color: "red",
+                text: "Très rapide si la dérivée est disponible et x0 bien choisi.",
+              },
+              {
+                title: "Sécante",
+                color: "green",
+                text: "Bon compromis — rapide sans avoir besoin de la dérivée analytique.",
+              },
+            ].map(({ title, color, text }) => (
+              <div
+                key={title}
+                className={`bg-${color}-500/10 border border-${color}-500/30 rounded-lg p-4`}
+                style={{
+                  background: `rgba(${color === "blue" ? "59,130,246" : color === "red" ? "239,68,68" : "34,197,94"},0.08)`,
+                  borderColor: `rgba(${color === "blue" ? "59,130,246" : color === "red" ? "239,68,68" : "34,197,94"},0.3)`,
+                }}
+              >
+                <h4
+                  className="font-semibold mb-2"
+                  style={{
+                    color:
+                      color === "blue"
+                        ? "#3b82f6"
+                        : color === "red"
+                          ? "#ef4444"
+                          : "#22c55e",
+                  }}
+                >
+                  {title}
+                </h4>
+                <p className="text-sm text-foreground/80">{text}</p>
               </div>
-
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                <h4 className="text-red-400 font-semibold mb-2">Use Newton</h4>
-                <p className="text-sm text-foreground/80">
-                  When you have the derivative and need fast convergence. Requires careful initial guess.
-                </p>
-              </div>
-
-              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4">
-                <h4 className="text-green-400 font-semibold mb-2">Use Secante</h4>
-                <p className="text-sm text-foreground/80">
-                  When you can&apos;t compute the derivative but need reasonably fast convergence.
-                </p>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </main>
