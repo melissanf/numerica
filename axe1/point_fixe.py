@@ -1,6 +1,5 @@
 from utils import parse_function, f, derivative
 import numpy as np
-import sympy as sp
 
 
 def verifier_stabilite(phi, a, b, n=100):
@@ -45,7 +44,6 @@ def point_fixe(phi_str, x0, a, b, eps=1e-5, max_iter=100):
 
     dphi = derivative(phi)
 
-   
     stable = verifier_stabilite(phi, a, b)
     k, contracte = verifier_contraction(dphi, a, b)
 
@@ -53,7 +51,6 @@ def point_fixe(phi_str, x0, a, b, eps=1e-5, max_iter=100):
     print("Contraction :", contracte)
     print("k =", k)
 
-    
     if not stable:
         print("Attention : phi(x) sort de l'intervalle [a,b]")
 
@@ -63,14 +60,12 @@ def point_fixe(phi_str, x0, a, b, eps=1e-5, max_iter=100):
     x = x0
 
     for i in range(max_iter):
-
         try:
             x_new = f(phi, x)
         except:
             print("Erreur evaluation phi(x)")
             return None
 
-       
         if abs(x_new) > 1e6:
             print("Divergence detectee")
             return None

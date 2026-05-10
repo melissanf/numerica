@@ -1,70 +1,77 @@
-import Sidebar from '@/components/Sidebar';
-import Header from '@/components/Header';
-import AlgorithmCard from '@/components/AlgorithmCard';
-import { Search } from 'lucide-react';
+import Sidebar from "@/components/Sidebar";
+import Header from "@/components/Header";
+import AlgorithmCard from "@/components/AlgorithmCard";
+import { Search } from "lucide-react";
 
 export default function MenuPage() {
   const algorithms = {
-    'Résolution des fonctions non linéaire': [
+    "Résolution des fonctions non linéaire": [
       {
-        id: '1',
-        title: 'Dichotomie',
-        description: 'Algorithme de dichotomie pour résoudre f(x) = 0',
-        color: 'blue' as const,
-        href: '/algorithms/dichotomie',
+        id: "1",
+        title: "Dichotomie",
+        description: "Algorithme de dichotomie pour résoudre f(x) = 0",
+        color: "blue" as const,
+        href: "/algorithms/dichotomie",
       },
       {
-        id: '2',
-        title: 'Newton',
-        description: 'Méthode de Newton pour la recherche de racines',
-        color: 'red' as const,
-        href: '/algorithms/newton',
+        id: "2",
+        title: "Newton",
+        description: "Méthode de Newton pour la recherche de racines",
+        color: "red" as const,
+        href: "/algorithms/newton",
       },
       {
-        id: '3',
-        title: 'Secante',
-        description: 'Méthode de la sécante pour l\'approximation',
-        color: 'green' as const,
-        href: '/algorithms/secante',
-      },
-    ],
-    'Résolution Des Systèmes Linéaires': [
-      {
-        id: '4',
-        title: 'Gauss-Seidel',
-        description: 'Méthode itérative pour résoudre Ax = b',
-        color: 'yellow' as const,
-        href: '/algorithms/gauss-seidel',
-      },
-      {
-        id: '5',
-        title: 'Jacobi',
-        description: 'Méthode de Jacobi pour les systèmes linéaires',
-        color: 'pink' as const,
-        href: '/algorithms/jacobi',
+        id: "3",
+        title: "Secante",
+        description: "Méthode de la sécante pour l'approximation",
+        color: "green" as const,
+        href: "/algorithms/secante",
       },
     ],
-    'Interpolation Et Approximation': [
+    "Résolution Des Systèmes Linéaires": [
       {
-        id: '6',
-        title: 'Lagrange',
-        description: 'Interpolation polynomiale de Lagrange',
-        color: 'blue' as const,
-        href: '/algorithms/lagrange',
+        id: "4",
+        title: "Gauss-Seidel",
+        description: "Méthode itérative pour résoudre Ax = b",
+        color: "yellow" as const,
+        href: "/algorithms/gauss-seidel",
       },
       {
-        id: '7',
-        title: 'Newton Divided Differences',
-        description: 'Différences divisées de Newton',
-        color: 'yellow' as const,
-        href: '/algorithms/newton-dd',
+        id: "5",
+        title: "Jacobi",
+        description: "Méthode de Jacobi pour les systèmes linéaires",
+        color: "pink" as const,
+        href: "/algorithms/jacobi",
+      },
+    ],
+    "Interpolation Et Approximation": [
+      {
+        id: "6",
+        title: "Lagrange",
+        description: "Interpolation polynomiale de Lagrange",
+        color: "blue" as const,
+        href: "/axe3/interpolation",
       },
       {
-        id: '8',
-        title: 'Spline Cubique',
-        description: 'Interpolation par splines cubiques',
-        color: 'red' as const,
-        href: '/algorithms/spline',
+        id: "7",
+        title: "Newton (Différences Divisées)",
+        description: "Différences divisées de Newton",
+        color: "yellow" as const,
+        href: "/axe3/interpolation",
+      },
+      {
+        id: "8",
+        title: "Moindres Carrés",
+        description: "Approximation polynomiale au sens des MC",
+        color: "red" as const,
+        href: "/axe3/approximation",
+      },
+      {
+        id: "9",
+        title: "Descente de Gradient",
+        description: "Optimisation par gradient à pas fixe",
+        color: "green" as const,
+        href: "/axe3/gradient",
       },
     ],
   };
@@ -72,7 +79,7 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-background">
       <Sidebar />
-      
+
       <main className="ml-32">
         <Header title="NUMERICA" />
 
@@ -97,7 +104,9 @@ export default function MenuPage() {
         <div className="px-8 pb-12 space-y-12">
           {Object.entries(algorithms).map(([category, algos]) => (
             <section key={category}>
-              <h3 className="text-xl font-semibold text-foreground mb-6">{category}</h3>
+              <h3 className="text-xl font-semibold text-foreground mb-6">
+                {category}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {algos.map((algo) => (
                   <AlgorithmCard
