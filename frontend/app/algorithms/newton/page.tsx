@@ -120,7 +120,7 @@ export default function NewtonPage() {
                     <div className="bg-input rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Root</p>
                       <p className="text-lg font-bold text-red-400">
-                        {result.racine !== null ? result.racine.toFixed(6) : "No root found"}
+                        {result?.racine?.toFixed(6) ?? "No root found"}
                       </p>
                     </div>
                     <div className="bg-input rounded-lg p-4">
@@ -130,7 +130,7 @@ export default function NewtonPage() {
                     <div className="bg-input rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Error</p>
                       <p className="text-lg font-bold text-yellow-400">
-                        {result.error !== null ? result.error.toFixed(8) : "N/A"}
+                        {result?.error?.toFixed(8) ?? "N/A"}
                       </p>
                     </div>
                   </div>
