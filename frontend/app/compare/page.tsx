@@ -88,8 +88,6 @@ export default function ComparePage() {
         body: JSON.stringify({
           f: fn,
           x0: parseFloat(x0),
-          a: parseFloat(a),
-          b: parseFloat(b),
         }),
       }).then((r) => r.json());
     }
@@ -376,6 +374,34 @@ export default function ComparePage() {
             </div>
           )}
 
+          {/* Conclusion */}
+          {hasResults && (
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                Conclusion : Quel est le meilleur ?
+              </h3>
+              <div className="space-y-4 text-foreground/80">
+                <p>
+                  Le &quot;meilleur&quot; algorithme dépend entièrement de votre problème et de vos contraintes.
+                </p>
+                <ul className="list-disc list-inside space-y-2">
+                  <li>
+                    <strong style={{ color: '#3b82f6' }}>La méthode de dichotomie est la plus robuste.</strong> Si vous avez un intervalle où la fonction change de signe, elle est garantie de trouver une racine. Cependant, elle est aussi la plus lente. Choisissez-la pour la fiabilité avant tout.
+                  </li>
+                  <li>
+                    <strong style={{ color: '#ef4444' }}>La méthode de Newton est la plus rapide (convergence quadratique).</strong> Cependant, elle nécessite le calcul de la dérivée, et peut échouer si le point de départ est mal choisi. Utilisez-la si vous pouvez facilement calculer la dérivée et avez une bonne idée du point de départ.
+                  </li>
+                  <li>
+                    <strong style={{ color: '#22c55e' }}>La méthode de la sécante est un excellent compromis.</strong> Elle est presque aussi rapide que Newton (convergence superlinéaire) mais n'a pas besoin de la dérivée. C'est souvent le choix par défaut dans beaucoup de cas.
+                  </li>
+                </ul>
+                <p className="pt-2">
+                  En résumé : <strong>Pour la vitesse, Newton. Pour la fiabilité, Dichotomie. Pour un bon équilibre, Sécante.</strong>
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Static comparison table */}
           <div className="bg-card border border-border rounded-xl p-6">
             <h3 className="text-lg font-semibold text-foreground mb-4">
@@ -420,51 +446,6 @@ export default function ComparePage() {
                 </tbody>
               </table>
             </div>
-          </div>
-
-          {/* Recommendations */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[
-              {
-                title: "Dichotomie",
-                color: "blue",
-                text: "Fiable et simple. Idéal quand on veut garantir la convergence sans dérivée.",
-              },
-              {
-                title: "Newton",
-                color: "red",
-                text: "Très rapide si la dérivée est disponible et x0 bien choisi.",
-              },
-              {
-                title: "Sécante",
-                color: "green",
-                text: "Bon compromis — rapide sans avoir besoin de la dérivée analytique.",
-              },
-            ].map(({ title, color, text }) => (
-              <div
-                key={title}
-                className={`bg-${color}-500/10 border border-${color}-500/30 rounded-lg p-4`}
-                style={{
-                  background: `rgba(${color === "blue" ? "59,130,246" : color === "red" ? "239,68,68" : "34,197,94"},0.08)`,
-                  borderColor: `rgba(${color === "blue" ? "59,130,246" : color === "red" ? "239,68,68" : "34,197,94"},0.3)`,
-                }}
-              >
-                <h4
-                  className="font-semibold mb-2"
-                  style={{
-                    color:
-                      color === "blue"
-                        ? "#3b82f6"
-                        : color === "red"
-                          ? "#ef4444"
-                          : "#22c55e",
-                  }}
-                >
-                  {title}
-                </h4>
-                <p className="text-sm text-foreground/80">{text}</p>
-              </div>
-            ))}
           </div>
         </div>
       </main>
