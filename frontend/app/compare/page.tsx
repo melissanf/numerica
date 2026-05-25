@@ -85,10 +85,7 @@ export default function ComparePage() {
       calls.newton = fetch(`/api/axe1/newton`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          f: fn,
-          x0: parseFloat(x0),
-        }),
+        body: JSON.stringify({ f: fn, x0: parseFloat(x0) }),
       }).then((r) => r.json());
     }
 
@@ -104,7 +101,9 @@ export default function ComparePage() {
       const resolved: Record<string, any> = {};
       await Promise.all(
         Object.entries(calls).map(async ([id, promise]) => {
-          resolved[id] = await promise;
+          const res = await promise;
+          if (res.detail) throw new Error(`${ALGOS.find(a=>a.id===id)?.name}: ${res.detail}`);
+          resolved[id] = res;
         }),
       );
       setResults(resolved);
@@ -147,6 +146,30 @@ export default function ComparePage() {
   ];
 
   const hasResults = Object.keys(results).length > 0;
+  
+  const validResults = Object.entries(results).filter(
+    ([id, r]) => r.racine !== null
+  );
+
+  let iterWinner = null;
+  let errorWinner = null;
+
+  if (validResults.length > 1) {
+    let winnerByIterations = { id: '', val: Infinity };
+    let winnerByError = { id: '', val: Infinity };
+
+    for (const [id, r] of validResults) {
+      if (r.iterations < winnerByIterations.val) {
+        winnerByIterations = { id, val: r.iterations };
+      }
+      if (r.error < winnerByError.val) {
+        winnerByError = { id, val: r.error };
+      }
+    }
+    iterWinner = ALGOS.find(a => a.id === winnerByIterations.id);
+    errorWinner = ALGOS.find(a => a.id === winnerByError.id);
+  }
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -293,6 +316,25 @@ export default function ComparePage() {
                   </div>
                 );
               })}
+            </div>
+          )}
+          
+          {/* Dynamic Winner Analysis */}
+          {iterWinner && errorWinner && (
+            <div className="bg-card border border-border rounded-xl p-6">
+              <h3 className="text-lg font-semibold text-foreground mb-4">
+                🏆 Who won this race?
+              </h3>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Fastest Convergence (fewer iterations)</span>
+                  <span className="font-semibold px-2 py-1 rounded-md text-white" style={{backgroundColor: iterWinner.color}}>{iterWinner.name}</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Highest Precision (lowest error)</span>
+                  <span className="font-semibold px-2 py-1 rounded-md text-white" style={{backgroundColor: errorWinner.color}}>{errorWinner.name}</span>
+                </div>
+              </div>
             </div>
           )}
 
