@@ -23,7 +23,7 @@ export default function NewtonPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ f: functionInput, x0: parseFloat(x0), a: -5, b: 5, eps: parseFloat(tolerance) }),
+        body: JSON.stringify({ f: functionInput, x0: parseFloat(x0), eps: parseFloat(tolerance) }),
       });
 
       const text = await response.text();

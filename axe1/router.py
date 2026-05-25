@@ -29,8 +29,6 @@ class IntervalleRequest(BaseModel):
 class NewtonRequest(BaseModel):
     f: str
     x0: float
-    a: float
-    b: float
     eps: float
 
 
@@ -48,7 +46,6 @@ class PointFixeRequest(BaseModel):
 
 
 # ── Helpers (inline enriched versions, originals untouched) ───────────────────
-
 
 def _dichotomie(func_str, a, b, eps=1e-5):
     func = parse_function(func_str)
@@ -76,17 +73,14 @@ def _dichotomie(func_str, a, b, eps=1e-5):
     return racine, convergence
 
 
-def _newton(func_str, x0, a, b, eps=1e-5, max_iter=100):
+def _newton(func_str, x0, eps=1e-5, max_iter=100):
     import sympy as sp
 
     func = parse_function(func_str)
     if func is None:
         raise HTTPException(status_code=400, detail="Fonction invalide")
     dfunc = derivative(func)
-    fa = f(func, a)
-    fb = f(func, b)
-    if fa * fb > 0:
-        raise HTTPException(status_code=400, detail="Condition f(a)*f(b)<0 non respectée")
+
     x = x0
     convergence = []
     for i in range(max_iter):
@@ -186,7 +180,7 @@ def route_dichotomie(req: IntervalleRequest):
 
 @router.post("/newton")
 def route_newton(req: NewtonRequest):
-    racine, convergence = _newton(req.f, req.x0, req.a, req.b, req.eps)
+    racine, convergence = _newton(req.f, req.x0, req.eps)
     return {
         "racine": racine,
         "iterations": len(convergence),

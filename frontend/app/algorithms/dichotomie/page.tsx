@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 export default function DichotomiePage() {
   const [functionInput, setFunctionInput] = useState('x**2 - 4');
-  const [a, setA] = useState('-5');
+  const [a, setA] = useState('0');
   const [b, setB] = useState('5');
   const [tolerance, setTolerance] = useState('0.0001');
   const [result, setResult] = useState<any>(null);
