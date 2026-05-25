@@ -56,6 +56,7 @@ export default function ComparePage() {
   const [b, setB] = useState("5");
   const [x0, setX0] = useState("1");
   const [x1, setX1] = useState("3");
+  const [epsilon, setEpsilon] = useState("1e-7");
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Record<string, any>>({});
   const [error, setError] = useState<string | null>(null);
@@ -72,12 +73,13 @@ export default function ComparePage() {
     setResults({});
 
     const calls: Record<string, Promise<any>> = {};
+    const eps = parseFloat(epsilon);
 
     if (selected.includes("dichotomie")) {
       calls.dichotomie = fetch(`/api/axe1/dichotomie`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ f: fn, a: parseFloat(a), b: parseFloat(b) }),
+        body: JSON.stringify({ f: fn, a: parseFloat(a), b: parseFloat(b), eps }),
       }).then((r) => r.json());
     }
 
@@ -85,7 +87,7 @@ export default function ComparePage() {
       calls.newton = fetch(`/api/axe1/newton`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ f: fn, x0: parseFloat(x0) }),
+        body: JSON.stringify({ f: fn, x0: parseFloat(x0), eps }),
       }).then((r) => r.json());
     }
 
@@ -93,7 +95,7 @@ export default function ComparePage() {
       calls.secante = fetch(`/api/axe1/secante`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ f: fn, x0: parseFloat(x0), x1: parseFloat(x1) }),
+        body: JSON.stringify({ f: fn, x0: parseFloat(x0), x1: parseFloat(x1), eps }),
       }).then((r) => r.json());
     }
 
@@ -135,11 +137,11 @@ export default function ComparePage() {
       ),
     },
     {
-      metric: "Erreur finale (×1e5)",
+      metric: `Erreur (eps=${epsilon})`,
       ...Object.fromEntries(
         Object.entries(results).map(([id, r]) => [
           id,
-          r.error ? +(r.error * 1e5).toFixed(4) : 0,
+          r.error ? r.error : 0,
         ]),
       ),
     },
@@ -183,7 +185,7 @@ export default function ComparePage() {
               Comparer les algorithmes
             </h3>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
                 <label className="block text-sm text-muted-foreground mb-2">
                   f(x)
@@ -231,6 +233,17 @@ export default function ComparePage() {
                     className="w-full bg-input border border-border text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none"
                   />
                 </div>
+              </div>
+               <div>
+                <label className="block text-sm text-muted-foreground mb-2">
+                  Epsilon (précision)
+                </label>
+                <input
+                  value={epsilon}
+                  onChange={(e) => setEpsilon(e.target.value)}
+                  placeholder="1e-7"
+                  className="w-full bg-input border border-border text-foreground rounded-lg px-3 py-2 text-sm focus:outline-none"
+                />
               </div>
             </div>
 
@@ -288,7 +301,7 @@ export default function ComparePage() {
                       {algo.name}
                     </h4>
                     {r.racine === null ? (
-                      <p className="text-red-400 text-sm">{r.message}</p>
+                      <p className="text-red-400 text-sm">{r.message || "Erreur de calcul"}</p>
                     ) : (
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
@@ -327,11 +340,11 @@ export default function ComparePage() {
               </h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Fastest Convergence (fewer iterations)</span>
+                  <span className="text-muted-foreground">Convergence la plus rapide (moins d'itérations)</span>
                   <span className="font-semibold px-2 py-1 rounded-md text-white" style={{backgroundColor: iterWinner.color}}>{iterWinner.name}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Highest Precision (lowest error)</span>
+                  <span className="text-muted-foreground">Meilleure précision (erreur la plus faible)</span>
                   <span className="font-semibold px-2 py-1 rounded-md text-white" style={{backgroundColor: errorWinner.color}}>{errorWinner.name}</span>
                 </div>
               </div>
@@ -352,7 +365,11 @@ export default function ComparePage() {
                       stroke="rgba(255,255,255,0.1)"
                     />
                     <XAxis dataKey="iteration" stroke="rgba(255,255,255,0.5)" />
-                    <YAxis stroke="rgba(255,255,255,0.5)" />
+                    <YAxis
+                      scale="log"
+                      domain={['auto', 'auto']}
+                      stroke="rgba(255,255,255,0.5)" 
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "rgba(20,20,25,0.9)",
