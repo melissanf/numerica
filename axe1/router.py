@@ -23,19 +23,20 @@ class IntervalleRequest(BaseModel):
     f: str
     a: float
     b: float
-    eps: float
+    eps: float = 1e-5
 
 
 class NewtonRequest(BaseModel):
     f: str
     x0: float
-    eps: float
+    eps: float = 1e-5
 
 
 class SecanteRequest(BaseModel):
     f: str
     x0: float
     x1: float
+    eps: float = 1e-5
 
 
 class PointFixeRequest(BaseModel):
@@ -191,7 +192,7 @@ def route_newton(req: NewtonRequest):
 
 @router.post("/secante")
 def route_secante(req: SecanteRequest):
-    racine, convergence = _secante(req.f, req.x0, req.x1)
+    racine, convergence = _secante(req.f, req.x0, req.x1, req.eps)
     return {
         "racine": racine,
         "iterations": len(convergence),
