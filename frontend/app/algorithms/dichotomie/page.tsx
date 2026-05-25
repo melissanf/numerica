@@ -11,31 +11,26 @@ export default function DichotomiePage() {
   const [tolerance, setTolerance] = useState('0.0001');
   const [result, setResult] = useState<any>(null);
 
-  const handleSolve = () => {
-    // Simulate algorithm execution with mock data
-    const mockResult = {
-      root: 2.0000152587890625,
-      iterations: 15,
-      error: 0.00008392333984375,
-      convergenceData: [
-        { iteration: 0, error: 2.5, value: 0 },
-        { iteration: 1, error: 1.25, value: 1.25 },
-        { iteration: 2, error: 0.625, value: 1.875 },
-        { iteration: 3, error: 0.3125, value: 2.1875 },
-        { iteration: 4, error: 0.15625, value: 2.03125 },
-        { iteration: 5, error: 0.078125, value: 1.953125 },
-        { iteration: 6, error: 0.0390625, value: 1.9921875 },
-        { iteration: 7, error: 0.01953125, value: 2.01171875 },
-        { iteration: 8, error: 0.009765625, value: 2.00195312 },
-        { iteration: 9, error: 0.0048828125, value: 1.99951172 },
-        { iteration: 10, error: 0.00244140625, value: 2.00024414 },
-        { iteration: 11, error: 0.001220703125, value: 2.00085449 },
-        { iteration: 12, error: 0.0006103515625, value: 2.00042725 },
-        { iteration: 13, error: 0.00030517578125, value: 2.00012207 },
-        { iteration: 14, error: 0.0001525878906, value: 2.00001526 },
-      ],
-    };
-    setResult(mockResult);
+  const handleSolve = async () => {
+    try {
+      const response = await fetch('/api/axe1/dichotomie', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ f: functionInput, a: parseFloat(a), b: parseFloat(b), eps: parseFloat(tolerance) }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      console.error("Error solving:", error);
+      // Handle error state in the UI
+    }
   };
 
   return (
@@ -131,7 +126,7 @@ export default function DichotomiePage() {
                     <div className="bg-input rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Root</p>
                       <p className="text-lg font-bold text-blue-400">
-                        {result.root.toFixed(6)}
+                        {result.racine.toFixed(6)}
                       </p>
                     </div>
                     <div className="bg-input rounded-lg p-4">
@@ -151,7 +146,7 @@ export default function DichotomiePage() {
                 <div className="bg-card border border-border rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Convergence Analysis</h3>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={result.convergenceData}>
+                    <LineChart data={result.convergence_data}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                       <XAxis dataKey="iteration" stroke="rgba(255,255,255,0.5)" />
                       <YAxis stroke="rgba(255,255,255,0.5)" />

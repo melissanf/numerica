@@ -22,7 +22,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   const mainNav: NavItem[] = [
-    { label: "Home", href: "/menu", icon: <Home className="w-5 h-5" /> },
+    { label: "Home", href: "/", icon: <Home className="w-5 h-5" /> },
   ];
 
   const customNav: NavItem[] = [

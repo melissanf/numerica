@@ -4,8 +4,6 @@ import Header from '@/components/Header';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useState } from 'react';
 
-const API = 'http://127.0.0.1:8000';
-
 export default function GaussSeidelPage() {
   const [n, setN] = useState(3);
   const [A, setA] = useState([[4,1,-1],[2,7,1],[1,-3,12]]);
@@ -37,7 +35,7 @@ export default function GaussSeidelPage() {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`${API}/axe2/gauss-seidel`, {
+      const res = await fetch(`/api/axe2/gauss-seidel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ A, b }),

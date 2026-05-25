@@ -11,20 +11,26 @@ export default function NewtonPage() {
   const [tolerance, setTolerance] = useState('0.0001');
   const [result, setResult] = useState<any>(null);
 
-  const handleSolve = () => {
-    const mockResult = {
-      root: 2.0,
-      iterations: 5,
-      error: 0.0000001,
-      convergenceData: [
-        { iteration: 0, error: 1.0, value: 1.0 },
-        { iteration: 1, error: 0.25, value: 2.25 },
-        { iteration: 2, error: 0.0156, value: 2.00556 },
-        { iteration: 3, error: 0.00006, value: 2.0000076 },
-        { iteration: 4, error: 0.0000001, value: 2.0 },
-      ],
-    };
-    setResult(mockResult);
+  const handleSolve = async () => {
+    try {
+      const response = await fetch('/api/axe1/newton', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ f: functionInput, x0: parseFloat(x0), a: -5, b: 5, eps: parseFloat(tolerance) }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      console.error("Error solving:", error);
+      // Handle error state in the UI
+    }
   };
 
   return (
@@ -114,7 +120,7 @@ export default function NewtonPage() {
                     <div className="bg-input rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Root</p>
                       <p className="text-lg font-bold text-red-400">
-                        {result.root.toFixed(6)}
+                        {result.racine.toFixed(6)}
                       </p>
                     </div>
                     <div className="bg-input rounded-lg p-4">
@@ -133,7 +139,7 @@ export default function NewtonPage() {
                 <div className="bg-card border border-border rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Convergence Analysis</h3>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={result.convergenceData}>
+                    <LineChart data={result.convergence_data}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                       <XAxis dataKey="iteration" stroke="rgba(255,255,255,0.5)" />
                       <YAxis stroke="rgba(255,255,255,0.5)" />

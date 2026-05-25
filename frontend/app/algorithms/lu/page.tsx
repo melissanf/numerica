@@ -1,13 +1,12 @@
 'use client';
 
 import Header from '@/components/Header';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useState } from 'react';
 
-export default function JacobiPage() {
+export default function LUPage() {
   const [n, setN] = useState(3);
-  const [A, setA] = useState([[4,1,-1],[2,7,1],[1,-3,12]]);
-  const [b, setB] = useState([3,19,31]);
+  const [A, setA] = useState([[2, 1, -1], [-3, -1, 2], [-2, 1, 2]]);
+  const [b, setB] = useState([8, -11, -3]);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -35,7 +34,7 @@ export default function JacobiPage() {
     setError(null);
     setResult(null);
     try {
-      const res = await fetch(`/api/axe2/jacobi`, {
+      const res = await fetch(`/api/axe2/lu`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ A, b }),
@@ -50,14 +49,9 @@ export default function JacobiPage() {
     }
   }
 
-  const convergenceData = result?.erreurs?.map((e: number, i: number) => ({
-    iteration: i + 1,
-    error: e,
-  })) ?? [];
-
   return (
     <>
-      <Header title="Jacobi" breadcrumb={['Résolution Des Systèmes Linéaires', 'Jacobi']} />
+      <Header title="LU" breadcrumb={['Résolution Des Systèmes Linéaires', 'LU']} />
       <div className="p-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
@@ -90,7 +84,7 @@ export default function JacobiPage() {
                           type="number"
                           value={val}
                           onChange={e => updateA(i, j, e.target.value)}
-                          className="w-full bg-input border border-border text-foreground rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-pink-500/50"
+                          className="w-full bg-input border border-border text-foreground rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-teal-500/50"
                         />
                       ))}
                     </div>
@@ -108,7 +102,7 @@ export default function JacobiPage() {
                       type="number"
                       value={val}
                       onChange={e => updateB(i, e.target.value)}
-                      className="w-full bg-input border border-border text-foreground rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-pink-500/50"
+                      className="w-full bg-input border border-border text-foreground rounded px-2 py-1 text-xs text-center focus:outline-none focus:ring-1 focus:ring-teal-500/50"
                     />
                   ))}
                 </div>
@@ -117,7 +111,7 @@ export default function JacobiPage() {
               <button
                 onClick={handleSolve}
                 disabled={loading}
-                className="w-full bg-pink-500/80 hover:bg-pink-600 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50"
+                className="w-full bg-teal-500/80 hover:bg-teal-600 text-white font-semibold py-2 rounded-lg transition-colors disabled:opacity-50"
               >
                 {loading ? 'Calcul...' : 'Solve'}
               </button>
@@ -138,28 +132,10 @@ export default function JacobiPage() {
                     {result.solution.map((val: number, i: number) => (
                       <div key={i} className="bg-input rounded-lg p-4">
                         <p className="text-sm text-muted-foreground">x{i + 1}</p>
-                        <p className="text-lg font-bold text-pink-400">{val.toFixed(8)}</p>
+                        <p className="text-lg font-bold text-teal-400">{val.toFixed(8)}</p>
                       </div>
                     ))}
-                    <div className="bg-input rounded-lg p-4">
-                      <p className="text-sm text-muted-foreground">Itérations</p>
-                      <p className="text-lg font-bold text-green-400">{result.erreurs.length}</p>
-                    </div>
                   </div>
-                </div>
-
-                <div className="bg-card border border-border rounded-xl p-6">
-                  <h3 className="text-lg font-semibold text-foreground mb-4">Convergence</h3>
-                  <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={convergenceData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                      <XAxis dataKey="iteration" stroke="rgba(255,255,255,0.5)" />
-                      <YAxis stroke="rgba(255,255,255,0.5)" />
-                      <Tooltip contentStyle={{ backgroundColor: 'rgba(20,20,25,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '0.5rem' }} />
-                      <Legend />
-                      <Line type="monotone" dataKey="error" stroke="#eab308" strokeWidth={2} isAnimationActive={false} name="Erreur" />
-                    </LineChart>
-                  </ResponsiveContainer>
                 </div>
               </>
             )}

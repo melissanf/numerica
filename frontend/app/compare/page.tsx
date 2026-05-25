@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -15,8 +15,6 @@ import {
   Legend,
   ResponsiveContainer,
 } from "recharts";
-
-const API = "http://127.0.0.1:8000";
 
 const ALGOS = [
   { id: "dichotomie", name: "Dichotomie", color: "#3b82f6" },
@@ -76,7 +74,7 @@ export default function ComparePage() {
     const calls: Record<string, Promise<any>> = {};
 
     if (selected.includes("dichotomie")) {
-      calls.dichotomie = fetch(`${API}/axe1/dichotomie`, {
+      calls.dichotomie = fetch(`/api/axe1/dichotomie`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ f: fn, a: parseFloat(a), b: parseFloat(b) }),
@@ -84,7 +82,7 @@ export default function ComparePage() {
     }
 
     if (selected.includes("newton")) {
-      calls.newton = fetch(`${API}/axe1/newton`, {
+      calls.newton = fetch(`/api/axe1/newton`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -97,7 +95,7 @@ export default function ComparePage() {
     }
 
     if (selected.includes("secante")) {
-      calls.secante = fetch(`${API}/axe1/secante`, {
+      calls.secante = fetch(`/api/axe1/secante`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ f: fn, x0: parseFloat(x0), x1: parseFloat(x1) }),

@@ -11,23 +11,26 @@ export default function SecantePage() {
   const [tolerance, setTolerance] = useState('0.0001');
   const [result, setResult] = useState<any>(null);
 
-  const handleSolve = () => {
-    const mockResult = {
-      root: 2.0000076,
-      iterations: 8,
-      error: 0.00001,
-      convergenceData: [
-        { iteration: 0, error: 1.5, value: 0.0 },
-        { iteration: 1, error: 1.0, value: 1.5 },
-        { iteration: 2, error: 0.5, value: 2.1 },
-        { iteration: 3, error: 0.2, value: 2.05 },
-        { iteration: 4, error: 0.08, value: 1.98 },
-        { iteration: 5, error: 0.02, value: 2.003 },
-        { iteration: 6, error: 0.005, value: 2.0002 },
-        { iteration: 7, error: 0.00001, value: 2.0000076 },
-      ],
-    };
-    setResult(mockResult);
+  const handleSolve = async () => {
+    try {
+      const response = await fetch('/api/axe1/secante', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ f: functionInput, x0: parseFloat(x0), x1: parseFloat(x1), eps: parseFloat(tolerance) }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      setResult(data);
+    } catch (error) {
+      console.error("Error solving:", error);
+      // Handle error state in the UI
+    }
   };
 
   return (
@@ -117,7 +120,7 @@ export default function SecantePage() {
                     <div className="bg-input rounded-lg p-4">
                       <p className="text-sm text-muted-foreground">Root</p>
                       <p className="text-lg font-bold text-green-400">
-                        {result.root.toFixed(6)}
+                        {result.racine.toFixed(6)}
                       </p>
                     </div>
                     <div className="bg-input rounded-lg p-4">
@@ -136,7 +139,7 @@ export default function SecantePage() {
                 <div className="bg-card border border-border rounded-xl p-6">
                   <h3 className="text-lg font-semibold text-foreground mb-4">Convergence Analysis</h3>
                   <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={result.convergenceData}>
+                    <LineChart data={result.convergence_data}>
                       <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
                       <XAxis dataKey="iteration" stroke="rgba(255,255,255,0.5)" />
                       <YAxis stroke="rgba(255,255,255,0.5)" />
