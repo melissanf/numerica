@@ -10,8 +10,13 @@ export default function DichotomiePage() {
   const [b, setB] = useState('5');
   const [tolerance, setTolerance] = useState('0.0001');
   const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSolve = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
     try {
       const response = await fetch('/api/axe1/dichotomie', {
         method: 'POST',
@@ -21,15 +26,20 @@ export default function DichotomiePage() {
         body: JSON.stringify({ f: functionInput, a: parseFloat(a), b: parseFloat(b), eps: parseFloat(tolerance) }),
       });
 
+      const text = await response.text();
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(text || 'Erreur serveur');
       }
-
-      const data = await response.json();
-      setResult(data);
-    } catch (error) {
-      console.error("Error solving:", error);
-      // Handle error state in the UI
+      try {
+        const data = JSON.parse(text);
+        setResult(data);
+      } catch (e) {
+        throw new Error("Invalid JSON response from server.");
+      }
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -107,10 +117,15 @@ export default function DichotomiePage() {
                 {/* Solve Button */}
                 <button
                   onClick={handleSolve}
-                  className="w-full bg-blue-500/80 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors mt-6"
+                  disabled={loading}
+                  className="w-full bg-blue-500/80 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors mt-6 disabled:opacity-50"
                 >
-                  Solve
+                  {loading ? 'Calcul...' : 'Solve'}
                 </button>
+
+                {error && (
+                  <div className="p-3 rounded-lg border border-red-400/30 bg-red-500/10 text-red-400 text-xs mt-4">{error}</div>
+                )}
               </div>
             </div>
           </div>

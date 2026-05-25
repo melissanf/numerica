@@ -10,8 +10,13 @@ export default function NewtonPage() {
   const [x0, setX0] = useState('1');
   const [tolerance, setTolerance] = useState('0.0001');
   const [result, setResult] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const handleSolve = async () => {
+    setLoading(true);
+    setError(null);
+    setResult(null);
     try {
       const response = await fetch('/api/axe1/newton', {
         method: 'POST',
@@ -21,15 +26,20 @@ export default function NewtonPage() {
         body: JSON.stringify({ f: functionInput, x0: parseFloat(x0), a: -5, b: 5, eps: parseFloat(tolerance) }),
       });
 
+      const text = await response.text();
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        throw new Error(text || 'Erreur serveur');
       }
-
-      const data = await response.json();
-      setResult(data);
-    } catch (error) {
-      console.error("Error solving:", error);
-      // Handle error state in the UI
+      try {
+        const data = JSON.parse(text);
+        setResult(data);
+      } catch (e) {
+        throw new Error("Invalid JSON response from server.");
+      }
+    } catch (e: any) {
+      setError(e.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -102,10 +112,15 @@ export default function NewtonPage() {
 
                 <button
                   onClick={handleSolve}
-                  className="w-full bg-red-500/80 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition-colors mt-6"
+                  disabled={loading}
+                  className="w-full bg-red-500/80 hover:bg-red-600 text-white font-semibold py-2 rounded-lg transition-colors mt-6 disabled:opacity-50"
                 >
-                  Solve
+                  {loading ? 'Calcul...' : 'Solve'}
                 </button>
+
+                {error && (
+                  <div className="p-3 rounded-lg border border-red-400/30 bg-red-500/10 text-red-400 text-xs mt-4">{error}</div>
+                )}
               </div>
             </div>
           </div>

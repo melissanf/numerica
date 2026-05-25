@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 import sys, os
 
@@ -23,6 +23,7 @@ class IntervalleRequest(BaseModel):
     f: str
     a: float
     b: float
+    eps: float
 
 
 class NewtonRequest(BaseModel):
@@ -30,6 +31,7 @@ class NewtonRequest(BaseModel):
     x0: float
     a: float
     b: float
+    eps: float
 
 
 class SecanteRequest(BaseModel):
@@ -51,11 +53,11 @@ class PointFixeRequest(BaseModel):
 def _dichotomie(func_str, a, b, eps=1e-5):
     func = parse_function(func_str)
     if func is None:
-        return None, "Fonction invalide", []
+        raise HTTPException(status_code=400, detail="Fonction invalide")
     fa = f(func, a)
     fb = f(func, b)
     if fa * fb > 0:
-        return None, "Pas de racine dans cet intervalle (f(a)*f(b) > 0)", []
+        raise HTTPException(status_code=400, detail="Pas de racine dans cet intervalle (f(a)*f(b) > 0)")
     convergence = []
     i = 0
     while abs(b - a) / 2 > eps:
@@ -71,7 +73,7 @@ def _dichotomie(func_str, a, b, eps=1e-5):
             fa = f(func, a)
         i += 1
     racine = (a + b) / 2
-    return racine, None, convergence
+    return racine, convergence
 
 
 def _newton(func_str, x0, a, b, eps=1e-5, max_iter=100):
@@ -79,19 +81,19 @@ def _newton(func_str, x0, a, b, eps=1e-5, max_iter=100):
 
     func = parse_function(func_str)
     if func is None:
-        return None, "Fonction invalide", []
+        raise HTTPException(status_code=400, detail="Fonction invalide")
     dfunc = derivative(func)
     fa = f(func, a)
     fb = f(func, b)
     if fa * fb > 0:
-        return None, "Condition f(a)*f(b)<0 non respectée", []
+        raise HTTPException(status_code=400, detail="Condition f(a)*f(b)<0 non respectée")
     x = x0
     convergence = []
     for i in range(max_iter):
         fx = f(func, x)
         dfx = f(dfunc, x)
         if abs(dfx) < 1e-10:
-            return None, "Dérivée nulle", convergence
+            raise HTTPException(status_code=400, detail="Dérivée nulle")
         x_new = x - fx / dfx
         convergence.append(
             {
@@ -101,50 +103,50 @@ def _newton(func_str, x0, a, b, eps=1e-5, max_iter=100):
             }
         )
         if abs(x_new - x) < eps:
-            return x_new, None, convergence
+            return x_new, convergence
         x = x_new
-    return None, "Pas de convergence après max itérations", convergence
+    raise HTTPException(status_code=400, detail="Pas de convergence après max itérations")
 
 
 def _secante(func_str, x0, x1, eps=1e-5, max_iter=100):
     func = parse_function(func_str)
     if func is None:
-        return None, "Fonction invalide", []
+        raise HTTPException(status_code=400, detail="Fonction invalide")
     convergence = []
     for i in range(max_iter):
         try:
             f0 = f(func, x0)
             f1 = f(func, x1)
             if abs(f1 - f0) < 1e-12:
-                return None, "Division par zéro", convergence
+                raise HTTPException(status_code=400, detail="Division par zéro")
             x2 = x1 - f1 * (x1 - x0) / (f1 - f0)
         except:
-            return None, "Erreur numérique", convergence
+            raise HTTPException(status_code=400, detail="Erreur numérique")
         convergence.append(
             {"iteration": i, "value": round(x2, 8), "error": round(abs(x2 - x1), 10)}
         )
         if abs(x2 - x1) < eps:
             if abs(f(func, x2)) < 1e-3:
-                return x2, None, convergence
+                return x2, convergence
             else:
-                return None, "Pseudo-convergence détectée", convergence
+                raise HTTPException(status_code=400, detail="Pseudo-convergence détectée")
         x0, x1 = x1, x2
-    return None, "Pas de convergence", convergence
+    raise HTTPException(status_code=400, detail="Pas de convergence")
 
 
 def _point_fixe(phi_str, x0, a, b, eps=1e-5, max_iter=100):
     phi = parse_function(phi_str)
     if phi is None:
-        return None, "Fonction invalide", []
+        raise HTTPException(status_code=400, detail="Fonction invalide")
     convergence = []
     x = x0
     for i in range(max_iter):
         try:
             x_new = f(phi, x)
         except:
-            return None, "Erreur évaluation phi(x)", convergence
+            raise HTTPException(status_code=400, detail="Erreur évaluation phi(x)")
         if abs(x_new) > 1e6:
-            return None, "Divergence détectée", convergence
+            raise HTTPException(status_code=400, detail="Divergence détectée")
         convergence.append(
             {
                 "iteration": i,
@@ -153,9 +155,9 @@ def _point_fixe(phi_str, x0, a, b, eps=1e-5, max_iter=100):
             }
         )
         if abs(x_new - x) < eps:
-            return x_new, None, convergence
+            return x_new, convergence
         x = x_new
-    return None, "Pas de convergence", convergence
+    raise HTTPException(status_code=400, detail="Pas de convergence")
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -173,9 +175,7 @@ def route_continuite(req: ContinuiteRequest):
 
 @router.post("/dichotomie")
 def route_dichotomie(req: IntervalleRequest):
-    racine, err, convergence = _dichotomie(req.f, req.a, req.b)
-    if racine is None:
-        return {"racine": None, "message": err}
+    racine, convergence = _dichotomie(req.f, req.a, req.b, req.eps)
     return {
         "racine": racine,
         "iterations": len(convergence),
@@ -186,9 +186,7 @@ def route_dichotomie(req: IntervalleRequest):
 
 @router.post("/newton")
 def route_newton(req: NewtonRequest):
-    racine, err, convergence = _newton(req.f, req.x0, req.a, req.b)
-    if racine is None:
-        return {"racine": None, "message": err}
+    racine, convergence = _newton(req.f, req.x0, req.a, req.b, req.eps)
     return {
         "racine": racine,
         "iterations": len(convergence),
@@ -199,9 +197,7 @@ def route_newton(req: NewtonRequest):
 
 @router.post("/secante")
 def route_secante(req: SecanteRequest):
-    racine, err, convergence = _secante(req.f, req.x0, req.x1)
-    if racine is None:
-        return {"racine": None, "message": err}
+    racine, convergence = _secante(req.f, req.x0, req.x1)
     return {
         "racine": racine,
         "iterations": len(convergence),
@@ -212,9 +208,7 @@ def route_secante(req: SecanteRequest):
 
 @router.post("/point-fixe")
 def route_point_fixe(req: PointFixeRequest):
-    racine, err, convergence = _point_fixe(req.f, req.x0, req.a, req.b)
-    if racine is None:
-        return {"racine": None, "message": err}
+    racine, convergence = _point_fixe(req.f, req.x0, req.a, req.b)
     return {
         "racine": racine,
         "iterations": len(convergence),
