@@ -336,18 +336,21 @@ export default function ComparePage() {
           {iterWinner && errorWinner && (
             <div className="bg-card border border-border rounded-xl p-6">
               <h3 className="text-lg font-semibold text-foreground mb-4">
-                🏆 Who won this race?
+                🏆 Qui a gagné la course ?
               </h3>
               <div className="space-y-3 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Convergence la plus rapide (moins d'itérations)</span>
+                  <span className="text-muted-foreground">Convergence la plus rapide</span>
                   <span className="font-semibold px-2 py-1 rounded-md text-white" style={{backgroundColor: iterWinner.color}}>{iterWinner.name}</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Meilleure précision (erreur la plus faible)</span>
+                  <span className="text-muted-foreground">Erreur finale la plus faible</span>
                   <span className="font-semibold px-2 py-1 rounded-md text-white" style={{backgroundColor: errorWinner.color}}>{errorWinner.name}</span>
                 </div>
               </div>
+              <p className="text-xs text-muted-foreground mt-4 pt-3 border-t border-border/50">
+                <strong>Note :</strong> Le vainqueur en "précision" est celui avec l'erreur finale la plus petite. Ce n'est pas toujours l'algorithme avec la vitesse de convergence théorique la plus rapide, car le résultat dépend des étapes de calcul et du critère d'arrêt.
+              </p>
             </div>
           )}
 
