@@ -40,9 +40,16 @@ export default function JacobiPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ A, b }),
       });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.detail || 'Erreur serveur');
-      setResult(data);
+      const text = await res.text();
+      if (!res.ok) {
+        throw new Error(text || 'Erreur serveur');
+      }
+      try {
+        const data = JSON.parse(text);
+        setResult(data);
+      } catch (e) {
+        throw new Error("Invalid JSON response from server.");
+      }
     } catch (e: any) {
       setError(e.message);
     } finally {
